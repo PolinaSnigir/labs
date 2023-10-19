@@ -415,18 +415,6 @@ void DynamicArr() {
 //
 //
 //
-#include <iostream>
-
-template <class T>
-class Node {
-public:
-    T data;
-    Node<T>* prev;
-    Node<T>* next;
-
-    Node(T val) : data(val), prev(nullptr), next(nullptr) {}
-};
-
 template <class T>
 class Stack {
 private:
@@ -482,76 +470,95 @@ public:
     }
 };
 
-bool isOperator(char c) {
-    return c == '+' || c == '-' || c == '*' || c == '/' || c == 'cos' || c == 'sin' || c == '^';
+bool isOperator(const std::string& token) {
+    return token == "+" || token == "-" || token == "*" || token == "/" || token == "^";
+}
+bool isFunction(const std::string& token) {
+    return token == "sin" || token == "cos";
+}
+bool isOperand(const std::string& token) {
+    return std::isdigit(token[0]);
 }
 
-int getOperatorPrecedence(char op) {
-    if (op == '+' || op == '-') {
+int getPrecedence(const std::string& operatorToken) {
+    if (operatorToken == "+" || operatorToken == "-") {
         return 1;
     }
-    else if (op == '*' || op == '/') {
+    else if (operatorToken == "*" || operatorToken == "/") {
         return 2;
     }
-    else if (op == 'cos' || op == 'sin' || op == '^') {
+    else if (operatorToken == "^") {
         return 3;
     }
-    return 0;  
+    else {
+        return 0;
+    }
 }
 
-std::string infixToRPN(const std::string& infix) {
-    Stack<char> stack;
-    std::string postfix;
+std::string infixToRPN(const std::string& infixExpression) {
+    Stack<std::string> operatorStack;
+    std::stringstream postfixExpression;
 
-    for (char c : infix) {
-        if (isalnum(c) || c == ',') {
-            postfix += c;
+    std::istringstream iss(infixExpression);
+    std::string token;
+    while (iss >> token) {
+        if (isOperand(token)) {
+            postfixExpression << token << " ";
         }
-        else if (c == '(') {
-            stack.push(c);
+        else if (isFunction(token)) {
+            operatorStack.push(token);
         }
-        else if (c == ')') {
-            while (!stack.isEmpty() && stack.peek() != '(') {
-                postfix += stack.pop();
+        else if (isOperator(token)) {
+            while (!operatorStack.isEmpty() && isOperator(operatorStack.peek()) && getPrecedence(operatorStack.peek()) >= getPrecedence(token)) {
+                postfixExpression << operatorStack.peek() << " ";
+                operatorStack.pop();
             }
-            if (!stack.isEmpty() && stack.peek() == '(') {
-                stack.pop();
+            operatorStack.push(token);
+        }
+        else if (token == "(") {
+            operatorStack.push(token);
+        }
+        else if (token == ")") {
+            while (!operatorStack.isEmpty() && operatorStack.peek() != "(") {
+                postfixExpression << operatorStack.peek() << " ";
+                operatorStack.pop();
+            }
+
+            if (!operatorStack.isEmpty() && operatorStack.peek() == "(") {
+                operatorStack.pop();
             }
             else {
-                throw std::invalid_argument("Mismatched parentheses");
+                //    // Mismatched parentheses
+                return "";
             }
-        }
-       
-        else if (isOperator(c)) {
-            while (!stack.isEmpty() && isOperator(stack.peek()) && getOperatorPrecedence(stack.peek()) >= getOperatorPrecedence(c)) {
-                postfix += stack.pop();
-            }
-            stack.push(c);
         }
     }
 
-    while (!stack.isEmpty()) {
-        if (stack.peek() == '(') {
-            throw std::invalid_argument("Mismatched parentheses");
-        }
-        postfix += stack.pop();
+    while (!operatorStack.isEmpty()) {
+
+        postfixExpression << operatorStack.peek() << " ";
+        operatorStack.pop();
     }
-    return postfix;
+
+    return postfixExpression.str();
 }
 
 void StackSortSt() {
+    setlocale(LC_ALL, "Russian");
     std::string infixExpression;
-    std::cout << "Введите инфиксное выражение (cos и sin писать слитно с числом): ";
-    std::cin >> infixExpression;
+    std::cout << "Введите инфиксное выражение (отделять символы пробелом): ";
+    std::cin.get();
+    std::getline(std::cin, infixExpression);
 
     std::string postfixExpression = infixToRPN(infixExpression);
     std::cout << "Постфиксное выражение: " << postfixExpression << std::endl;
+
 }
 //
 //
 //
 
-int prompt_menu_item(){
+int prompt_menu_item() {
     int variant;
     cout << "Выберите вариант\n" << endl;
     cout << "1. Двусвязный список\n"
@@ -562,7 +569,7 @@ int prompt_menu_item(){
     cin >> variant;
     return variant;
 }
-void main(){
+void main() {
     int x = 0;
     setlocale(LC_ALL, "Russian");
     while (x == 0) {
@@ -570,19 +577,17 @@ void main(){
 
         switch (variant) {
         case 1:
-            system("cls");
             cout << "Двусвязный список " << endl;
             LinkedList();
             break;
         case 2:
-            system("cls");
             cout << "Динамичиский массив" << endl;
             DynamicArr();
             break;
         case 3:
-            system("cls");
             cout << "Стек" << endl;
             StackSortSt();
+
             break;
         case 4:
             cout << "Выход из программы..." << endl;
@@ -590,10 +595,10 @@ void main(){
             break;
         default:
             cerr << "Вы выбрали неверный вариант" << endl;
-            system("cls");
         }
-    }  
+    }
 }
+
 
 
 
