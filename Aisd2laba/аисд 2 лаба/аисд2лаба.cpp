@@ -3,6 +3,8 @@
 
 using namespace std;
 
+const int MIN_GALLOP = 7;
+
 template <class T>
 class DynamicArray {
 private:
@@ -59,96 +61,25 @@ public:
 
 };
 
-template <class T>
-class Node {
-private:
-    T data;
-    Node<T>* next;
-    Node<T>* prev;
-public:
-    Node(T const& newData) : data(newData), next(nullptr) {}
 
-    T getData() const {
-        return data;
-    }
 
-    void setData(T const& newData) {
-        data = newData;
-    }
+int binarySearch(int* arr, int& key, int left, int right) {
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
 
-    Node<T>* getNext() const {
-        return next;
-    }
-
-    void setNext(Node<T>* newNext) {
-        next = newNext;
-    }
-    Node<T>* getPrev() const {
-        return prev;
-    }
-
-    void setPrev(Node<T>* newPrev) {
-        prev = newPrev;
-    }
-};
-
-template <class T>
-class Stack {
-private:
-    Node<T>* top;
-    int size;
-
-public:
-    Stack() : top(nullptr), size(0) {}
-
-    ~Stack() {
-        while (!isEmpty()) {
-            pop();
+        if (arr[mid] == key) {
+            return mid;
         }
-    }
-
-    bool isEmpty() const {
-        return size == 0;
-    }
-
-    void push(T val) {
-        Node<T>* newNode = new Node<T>(val);
-        if (isEmpty()) {
-            top = newNode;
+        else if (arr[mid] < key) {
+            left = mid + 1;
         }
         else {
-            top->setNext(newNode);
-            newNode->setPrev(top);
-            top = newNode;
+            right = mid - 1;
         }
-        size++;
     }
 
-    T pop() {
-
-
-        if (isEmpty()) {
-            throw std::out_of_range("Стек пустой");
-        }
-        T popped = top->getData();
-        Node<T>* temp = top;
-        top = top->getPrev();
-        if (top != nullptr) {
-            top->setNext(nullptr);
-        }
-        delete temp;
-        size--;
-        return popped;
-    }
-
-    T peek() const {
-        if (isEmpty()) {
-            throw std::out_of_range("Стек пустой");
-        }
-        return top->getData();
-    }
-};
-
+    return left;
+}
 void merge(int arr[], int left, int mid, int right) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
@@ -166,7 +97,7 @@ void merge(int arr[], int left, int mid, int right) {
     }
 
     int i = 0, j = 0, k = left;
-
+    
     while (i < n1 && j < n2) {
         if (leftArr.get(i) <= rightArr.get(j)) {
             arr[k] = leftArr.get(i);
@@ -178,7 +109,6 @@ void merge(int arr[], int left, int mid, int right) {
         }
         k++;
     }
-
     while (i < n1) {
         arr[k] = leftArr.get(i);
         i++;
@@ -190,6 +120,8 @@ void merge(int arr[], int left, int mid, int right) {
         j++;
         k++;
     }
+
+
 }
 
 void insertionSort(int arr[], int left, int right) {
@@ -218,24 +150,29 @@ int calculateMinrun(int size) {
 
 void timSort(int arr[], int size) {
     int minrun = calculateMinrun(size);
-    Stack<pair<int, int>> stackOfRanges;
-
     for (int i = 0; i < size; i += minrun) {
-        stackOfRanges.push(make_pair(i, min(i + minrun - 1, size - 1)));
-    }
-
-    while (!stackOfRanges.isEmpty()) {
-        pair<int, int> range = stackOfRanges.pop();
-        insertionSort(arr, range.first, range.second);
+        insertionSort(arr, i, min(i + minrun - 1, size - 1));
     }
 
     for (int sizeMerge = minrun; sizeMerge < size; sizeMerge *= 2) {
         for (int left = 0; left < size; left += 2 * sizeMerge) {
             int mid = left + sizeMerge - 1;
             int right = min((left + 2 * sizeMerge - 1), (size - 1));
-            merge(arr, left, mid, right);
+
+            if (mid < right) {
+                if (arr[mid] <= arr[mid + 1]) {
+                    continue; 
+                }
+
+                int gallopLeft = binarySearch(arr, arr[mid], left, mid);
+                int gallopRight = binarySearch(arr, arr[mid + 1], mid + 1, right) - 1;
+
+                merge(arr, left, mid, right);
+            }
+
         }
     }
+   
 }
 
 
