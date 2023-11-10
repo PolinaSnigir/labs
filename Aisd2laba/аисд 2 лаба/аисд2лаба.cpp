@@ -3,8 +3,6 @@
 
 using namespace std;
 
-const int MIN_GALLOP = 7;
-
 template <class T>
 class DynamicArray {
 private:
@@ -48,7 +46,7 @@ public:
 
     void resize(int newSize) {
         T* tempArr = new T[newSize];
-        int copySize = newSize < size ? newSize : size;  
+        int copySize = newSize < size ? newSize : size;
         for (int i = 0; i < copySize; i++) {
             tempArr[i] = arr[i];
         }
@@ -61,25 +59,6 @@ public:
 
 };
 
-
-
-int binarySearch(int* arr, int& key, int left, int right) {
-    while (left <= right) {
-        int mid = left + (right - left) / 2;
-
-        if (arr[mid] == key) {
-            return mid;
-        }
-        else if (arr[mid] < key) {
-            left = mid + 1;
-        }
-        else {
-            right = mid - 1;
-        }
-    }
-
-    return left;
-}
 void merge(int arr[], int left, int mid, int right) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
@@ -97,18 +76,37 @@ void merge(int arr[], int left, int mid, int right) {
     }
 
     int i = 0, j = 0, k = left;
-    
+
+
     while (i < n1 && j < n2) {
-        if (leftArr.get(i) <= rightArr.get(j)) {
-            arr[k] = leftArr.get(i);
-            i++;
-        }
-        else {
+        int gallopLeft = 0;
+        while (j < n2 && leftArr.get(i) > rightArr.get(j)) {
             arr[k] = rightArr.get(j);
             j++;
+            k++;
+            gallopLeft++;
         }
-        k++;
+
+
+        for (int gallopIndex = 0; gallopIndex < gallopLeft; gallopIndex++) {
+            leftArr.add(arr[left + i + gallopIndex]);
+        }
+        i += gallopLeft;
+
+
+        while (i < n1 && j < n2) {
+            if (leftArr.get(i) <= rightArr.get(j)) {
+                arr[k] = leftArr.get(i);
+                i++;
+            }
+            else {
+                arr[k] = rightArr.get(j);
+                j++;
+            }
+            k++;
+        }
     }
+
     while (i < n1) {
         arr[k] = leftArr.get(i);
         i++;
@@ -120,8 +118,6 @@ void merge(int arr[], int left, int mid, int right) {
         j++;
         k++;
     }
-
-
 }
 
 void insertionSort(int arr[], int left, int right) {
@@ -139,16 +135,18 @@ void insertionSort(int arr[], int left, int right) {
 }
 
 int calculateMinrun(int size) {
-    int minrun = size;
+    int minrun = 32;
 
-    while (minrun >= 64) {
-        minrun >>= 1; 
+    while (size >= minrun) {
+        minrun |= size & 1;
+        size >>= 1;
     }
 
-    return minrun + 1;
+    return minrun;
 }
 
 void timSort(int arr[], int size) {
+
     int minrun = calculateMinrun(size);
     for (int i = 0; i < size; i += minrun) {
         insertionSort(arr, i, min(i + minrun - 1, size - 1));
@@ -161,25 +159,23 @@ void timSort(int arr[], int size) {
 
             if (mid < right) {
                 if (arr[mid] <= arr[mid + 1]) {
-                    continue; 
+                    continue;
                 }
-
-                int gallopLeft = binarySearch(arr, arr[mid], left, mid);
-                int gallopRight = binarySearch(arr, arr[mid + 1], mid + 1, right) - 1;
 
                 merge(arr, left, mid, right);
             }
 
         }
     }
-   
+
+
 }
 
 
 int main() {
     setlocale(LC_ALL, "Russian");
     int arr[128];
-    srand(time(0)); 
+    srand(time(0));
     for (int i = 0; i < 128; i++)
         arr[i] = 1 + rand() % 100;
 
